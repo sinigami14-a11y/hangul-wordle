@@ -2,804 +2,504 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>한들 (4글자 정밀 한글 워들)</title>
-  <!-- Tailwind CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4글자 한글 워들 - 한들</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            correct: '#538d4e', // Green (위치 & 자모 일치)
-            present: '#b59f3b', // Yellow (다른 위치에 존재)
-            absent: '#3a3a3c',  // Gray (전혀 없음)
-            boardBg: '#121213',
-            cardBg: '#1a1a1b',
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     body {
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
       background-color: #121213;
       color: #ffffff;
-      touch-action: manipulation;
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
     }
-
-    /* Custom Scrollbar for 20 attempts */
-    #board-scroll::-webkit-scrollbar {
+    
+    /* Custom Scrollbar */
+    #board-container::-webkit-scrollbar {
       width: 6px;
     }
-    #board-scroll::-webkit-scrollbar-track {
-      background: #1a1a1b;
+    #board-container::-webkit-scrollbar-track {
+      background: #18181c;
       border-radius: 4px;
     }
-    #board-scroll::-webkit-scrollbar-thumb {
-      background: #3a3a3c;
+    #board-container::-webkit-scrollbar-thumb {
+      background: #3f3f46;
       border-radius: 4px;
     }
-    #board-scroll::-webkit-scrollbar-thumb:hover {
-      background: #565758;
+    #board-container::-webkit-scrollbar-thumb:hover {
+      background: #52525b;
     }
 
-    /* Flip Animation */
-    .flip-tile {
-      transition: transform 0.6s ease-in-out, background-color 0.6s, border-color 0.6s;
-      transform-style: preserve-3d;
+    /* Status Colors */
+    .bg-correct { background-color: #538d4e !important; color: #ffffff !important; border-color: #538d4e !important; }
+    .bg-present { background-color: #b59f3b !important; color: #ffffff !important; border-color: #b59f3b !important; }
+    .bg-absent { background-color: #3a3a3c !important; color: #a1a1aa !important; border-color: #3a3a3c !important; }
+    .bg-empty { background-color: transparent; border: 1px solid #3f3f46; color: #71717a; }
+
+    /* Complete Syllable Border Highlight */
+    .border-syllable-complete {
+      border-color: #10b981 !important; /* Vivid Emerald Green for complete syllable */
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
     }
-    .flipped {
-      transform: rotateX(360deg);
+
+    /* Key hover animations */
+    .key-btn {
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    .key-btn:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-between overflow-hidden select-none">
+<body class="h-screen w-screen flex flex-col items-center justify-between p-3 sm:p-4 overflow-hidden select-none">
 
   <!-- Header -->
-  <header class="w-full max-w-xl px-4 py-3 border-b border-gray-800 flex justify-between items-center bg-[#121213] z-20">
-    <button onclick="openModal('help-modal')" class="text-gray-400 hover:text-white text-xl p-1 focus:outline-none">
-      <i class="fa-solid fa-circle-question"></i>
-    </button>
-    <div class="text-center">
-      <h1 class="text-2xl font-bold tracking-wider text-white flex items-center gap-2 justify-center">
-        <span>한들</span>
-        <span class="text-xs bg-emerald-600 text-white font-normal px-2 py-0.5 rounded-full">4글자 정밀 모드</span>
-      </h1>
-      <p class="text-xs text-gray-400">초성 · 중성 · 종성 완전 분리 판정 (기회 20회)</p>
+  <header class="w-full max-w-md flex items-center justify-between py-2 border-b border-zinc-800 mb-2">
+    <div class="flex items-center gap-2">
+      <h1 class="text-2xl font-black tracking-widest text-white">한들</h1>
+      <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">4글자 모드</span>
     </div>
-    <button onclick="openModal('stats-modal')" class="text-gray-400 hover:text-white text-xl p-1 focus:outline-none">
-      <i class="fa-solid fa-chart-simple"></i>
-    </button>
+    <div class="flex items-center gap-2">
+      <button onclick="openModal()" class="flex items-center gap-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors">
+        <span>❓</span> 게임 방법
+      </button>
+      <button onclick="resetGame()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 p-1.5 rounded-lg border border-zinc-700 transition-colors" title="새 게임">
+        🔄
+      </button>
+    </div>
   </header>
 
-  <!-- Notification Toast -->
-  <div id="toast" class="fixed top-16 z-50 bg-white text-black px-4 py-2 rounded-lg font-bold shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none text-sm">
-    메시지
+  <!-- Input Section (POSITIONED ABOVE THE BOARD) -->
+  <div class="w-full max-w-md flex flex-col gap-2 mb-2 z-10">
+    <div class="flex gap-2">
+      <input type="text" id="guess-input" maxlength="4" placeholder="예) 예수사랑" 
+             oninput="updateCurrentRowPreview()"
+             class="flex-1 bg-[#1a1a1b] border-2 border-zinc-700 text-white font-bold px-3 py-2.5 rounded-xl text-center text-lg focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-zinc-600">
+      <button onclick="submitGuess()" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 font-bold px-5 py-2.5 rounded-xl text-white transition-colors flex items-center justify-center shadow-lg shadow-indigo-900/20">
+        입력
+      </button>
+      <button onclick="deleteLastChar()" class="bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-900 font-bold px-3 py-2.5 rounded-xl text-zinc-300 border border-zinc-700 transition-colors">
+        ⌫
+      </button>
+    </div>
   </div>
 
-  <!-- Direct Text Input Bar for Easy Physical Typing & Paste -->
-  <div class="w-full max-w-md px-3 pt-3 flex gap-2">
-    <input type="text" id="direct-input" maxlength="4" placeholder="4글자 단어 직접 입력 (예: 예수사랑)" 
-           class="flex-1 bg-[#1a1a1b] border border-gray-700 text-white font-bold px-3 py-2 rounded-xl text-center text-base focus:outline-none focus:border-emerald-500 transition-colors"
-           onkeydown="if(event.key==='Enter'){ submitDirectInput(); }">
-    <button onclick="submitDirectInput()" class="bg-emerald-600 hover:bg-emerald-500 font-bold px-4 py-2 rounded-xl text-sm transition-colors">
-      제출
-    </button>
-  </div>
-
-  <!-- Game Board Area (Scrollable for 20 attempts) -->
-  <main id="board-scroll" class="w-full max-w-md flex-1 overflow-y-auto px-2 py-3 flex flex-col items-center gap-2">
-    <div id="board" class="flex flex-col gap-2.5 w-full items-center">
-      <!-- 20 Rows created dynamically -->
+  <!-- Game Board Container (Middle Scrollable, 20 Attempts Max) -->
+  <main id="board-container" class="w-full max-w-md flex-1 overflow-y-auto my-1 px-1 flex flex-col items-center relative">
+    <div id="board" class="flex flex-col gap-2.5 w-full py-1">
+      <!-- Rows generated dynamically -->
     </div>
   </main>
 
-  <!-- Virtual Keyboard & Controls Container -->
-  <footer class="w-full max-w-md px-2 pb-3 pt-1 flex flex-col gap-1.5 bg-[#121213] border-t border-gray-800">
-    <!-- Active Compose Preview Bar -->
-    <div class="flex justify-between items-center bg-[#1a1a1b] px-3 py-1 rounded-xl border border-gray-800 text-xs">
-      <div class="flex items-center gap-2">
-        <span class="text-gray-400">현재 입력:</span>
-        <span id="current-word-display" class="text-emerald-400 font-extrabold text-base tracking-widest min-w-[3rem] inline-block">____</span>
-      </div>
-      <div class="text-gray-400">
-        남은 시도: <span id="attempts-left" class="text-emerald-400 font-bold">20</span>/20
-      </div>
+  <!-- Virtual Keyboard Container (BOTTOM PINNED) -->
+  <div class="w-full max-w-md mt-2 flex flex-col gap-1.5 pt-2 border-t border-zinc-800">
+    <!-- Consonants Row 1 -->
+    <div class="flex justify-center gap-1 w-full" id="key-row-1">
+      <!-- ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ -->
     </div>
-
-    <!-- Virtual Hangul On-Screen Keyboard -->
-    <div id="keyboard" class="flex flex-col gap-1 w-full">
-      <div class="flex justify-center gap-1 w-full" id="key-row-1"></div>
-      <div class="flex justify-center gap-1 w-full" id="key-row-2"></div>
-      <div class="flex justify-center gap-1 w-full" id="key-row-3"></div>
-      <div class="flex justify-center gap-1.5 w-full mt-0.5">
-        <button onclick="handleVirtualKey('ENTER')" class="flex-[1.5] h-11 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 rounded-lg font-bold text-xs flex items-center justify-center transition-colors">
-          제출 (ENTER)
-        </button>
-        <button onclick="handleVirtualKey('BACKSPACE')" class="flex-1 h-11 bg-[#818384] hover:bg-gray-500 active:bg-gray-600 rounded-lg font-bold text-base flex items-center justify-center transition-colors">
-          <i class="fa-solid fa-backspace"></i>
-        </button>
-      </div>
+    <!-- Consonants Row 2 -->
+    <div class="flex justify-center gap-1 w-full" id="key-row-2">
+      <!-- ㅋ ㅌ ㅍ ㅎ ㄲ ㄸ ㅃ ㅆ ㅉ -->
     </div>
-  </footer>
+    <!-- Vowels Row 1 -->
+    <div class="flex justify-center gap-1 w-full" id="key-row-3">
+      <!-- ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ -->
+    </div>
+    <!-- Vowels Row 2 -->
+    <div class="flex justify-center gap-1 w-full" id="key-row-4">
+      <!-- ㅙ ㅚ ㅛ ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ -->
+    </div>
+  </div>
 
-  <!-- Modal: Help / Instructions -->
-  <div id="help-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#1a1a1b] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">한들 정밀 판정 규칙</h2>
-        <button onclick="closeModal('help-modal')" class="text-gray-400 hover:text-white text-xl">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+  <!-- Onboarding / Rules Modal -->
+  <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200">
+    <div class="bg-[#18181c] border border-zinc-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left flex flex-col gap-4">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+          <span>🧩</span> 한들 (4글자 워들)
+        </h2>
+        <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-lg font-bold">✕</button>
       </div>
-      <div class="space-y-4 text-sm text-gray-300">
-        <p>4글자로 이루어진 비밀 단어를 **20번의 시도** 내에 맞히는 게임입니다.</p>
-        <p>각 글자는 **초성, 중성, 종성(받침)**으로 분리되어 판정됩니다.</p>
+
+      <div class="flex flex-col gap-3 text-sm text-zinc-300 leading-relaxed">
+        <p class="font-semibold text-zinc-200">4글자 단어를 맞히는 한글 워들 게임입니다!</p>
         
-        <hr class="border-gray-700 my-2">
-        
-        <h3 class="font-bold text-white text-base">색상 판정 기준</h3>
-        
-        <div class="bg-[#121213] p-3 rounded-xl border border-gray-800 space-y-3">
-          <div>
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="w-6 h-6 rounded bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">ㅅ</span>
-              <span class="text-emerald-400 font-bold text-xs">초록색 (위치 & 자모 일치)</span>
-            </div>
-            <p class="text-xs text-gray-400 pl-8">해당 자모가 정답 단어의 **정확히 같은 위치/슬롯**에 존재합니다.</p>
+        <ul class="space-y-2 list-disc list-inside text-zinc-300 text-xs sm:text-sm">
+          <li>정답은 <strong class="text-indigo-400">4글자 단어</strong>입니다.</li>
+          <li>총 <strong class="text-indigo-400">20번의 기회</strong>가 제공됩니다.</li>
+          <li>각 글자의 <strong class="text-zinc-100">초성, 중성, 종성(받침)</strong> 별로 판정됩니다.</li>
+        </ul>
+
+        <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 flex flex-col gap-2 mt-1">
+          <span class="text-xs font-bold text-zinc-400">색상 판정 안내:</span>
+          
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-5 h-5 rounded-full bg-[#538d4e] flex items-center justify-center font-bold text-white shrink-0">ㄱ</span>
+            <span><strong class="text-[#6bbf64]">초록색</strong>: 자모와 위치가 정확히 일치</span>
+          </div>
+          
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-5 h-5 rounded-full bg-[#b59f3b] flex items-center justify-center font-bold text-white shrink-0">ㅅ</span>
+            <span><strong class="text-[#d9c159]">노란색</strong>: 정답 단어 내에 존재함 (위치 다름)</span>
           </div>
 
-          <div>
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="w-6 h-6 rounded bg-amber-600 text-white font-bold flex items-center justify-center text-xs">ㅁ</span>
-              <span class="text-amber-400 font-bold text-xs">노란색 (포함됨, 위치 다름)</span>
-            </div>
-            <p class="text-xs text-gray-400 pl-8">해당 자모가 정답 단어에 존재하지만, **다른 위치**에 있습니다.</p>
-          </div>
-
-          <div>
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="w-6 h-6 rounded bg-[#3a3a3c] text-gray-300 font-bold flex items-center justify-center text-xs">ㄱ</span>
-              <span class="text-gray-400 font-bold text-xs">회색 (없음)</span>
-            </div>
-            <p class="text-xs text-gray-400 pl-8">해당 자모가 정답 단어에 **전혀 존재하지 않습니다**.</p>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-5 h-5 rounded-full bg-[#3a3a3c] flex items-center justify-center font-bold text-zinc-400 shrink-0">ㅇ</span>
+            <span><strong class="text-zinc-400">회색</strong>: 정답 단어에 포함되지 않음</span>
           </div>
         </div>
-
-        <p class="text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 p-2.5 rounded-xl">
-          💡 **팁**: 받침(종성)도 완전하게 지원됩니다! 직접 4글자 단어를 텍스트 상자에 치거나 가상 키보드로 자모를 입력하실 수 있습니다.
-        </p>
       </div>
-      <button onclick="closeModal('help-modal')" class="w-full mt-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white">
+
+      <button onclick="closeModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors text-center shadow-lg shadow-indigo-900/30 mt-1">
         게임 시작하기
       </button>
     </div>
   </div>
 
-  <!-- Modal: Stats / Result -->
-  <div id="result-modal" class="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#1a1a1b] border border-gray-700 rounded-2xl max-w-md w-full p-6 text-white text-center">
-      <div id="result-icon" class="text-5xl mb-3">🎉</div>
-      <h2 id="result-title" class="text-2xl font-bold mb-1">정답입니다!</h2>
-      <p id="result-subtitle" class="text-sm text-gray-400 mb-4">축하합니다!</p>
-
-      <div class="bg-[#121213] p-4 rounded-xl border border-gray-800 mb-5">
-        <div class="text-xs text-gray-400 mb-1">정답 단어</div>
-        <div class="text-3xl font-extrabold tracking-widest text-emerald-400" id="result-word">????</div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mb-6 text-center">
-        <div class="bg-[#242526] p-3 rounded-lg">
-          <div id="stat-attempts" class="text-2xl font-bold text-white">1</div>
-          <div class="text-xs text-gray-400">시도 횟수</div>
-        </div>
-        <div class="bg-[#242526] p-3 rounded-lg">
-          <div id="stat-status" class="text-2xl font-bold text-emerald-400">성공</div>
-          <div class="text-xs text-gray-400">결과</div>
-        </div>
-      </div>
-
-      <button onclick="resetGame()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-xl font-bold text-white flex items-center justify-center gap-2">
-        <i class="fa-solid fa-rotate-right"></i> 다시 도전하기
-      </button>
-    </div>
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-16 bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl shadow-2xl font-bold text-sm opacity-0 transition-all duration-300 pointer-events-none z-40 transform -translate-y-2">
+    메시지
   </div>
 
   <script>
     // ==========================================
-    // 1. GAME CONSTANTS & UNICODE JAMO TABLES
+    // 1. GAME DATA & CONSTANTS
     // ==========================================
-    const TARGET_WORD = "생명나무"; // 4-letter Target Word
+    const TARGET_WORD = "생명나무";
     const MAX_ATTEMPTS = 20;
-    const WORD_LENGTH = 4;
-
-    // Unicode Hangul Arrays
+    
     const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
     const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ'];
     const JONG = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
-    // Complex/Double Jamo breakdown maps for key status propagation
-    const COMPLEX_JUNG = {
-      'ㅘ': ['ㅗ', 'ㅏ'], 'ㅙ': ['ㅗ', 'ㅐ'], 'ㅚ': ['ㅗ', 'ㅣ'],
-      'ㅝ': ['ㅜ', 'ㅓ'], 'ㅞ': ['ㅜ', 'ㅔ'], 'ㅟ': ['ㅜ', 'ㅣ'], 'ㅢ': ['ㅡ', 'ㅣ']
-    };
-
-    const COMPLEX_JONG = {
-      'ㄲ': ['ㄱ', 'ㄱ'], 'ㄳ': ['ㄱ', 'ㅅ'], 'ㄵ': ['ㄴ', 'ㅈ'], 'ㄶ': ['ㄴ', 'ㅎ'],
-      'ㄺ': ['ㄹ', 'ㄱ'], 'ㄻ': ['ㄹ', 'ㅁ'], 'ㄼ': ['ㄹ', 'ㅂ'], 'ㄽ': ['ㄹ', 'ㅅ'],
-      'ㄾ': ['ㄹ', 'ㅌ'], 'ㄿ': ['ㄹ', 'ㅍ'], 'ㅀ': ['ㄹ', 'ㅎ'], 'ㅄ': ['ㅂ', 'ㅅ'],
-      'ㅆ': ['ㅅ', 'ㅅ']
-    };
-
-    // Virtual Keyboard Layout
-    const KEYBOARD_LAYOUT = {
-      row1: ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ'],
-      row2: ['ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'],
-      row3: ['ㅏ', 'ㅐ', 'ㅑ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ']
-    };
-
-    // ==========================================
-    // 2. STATE MANAGEMENT
-    // ==========================================
     let currentAttempt = 0;
-    let currentSyllables = []; // List of fully formed characters (e.g. ['생', '명'])
-    let pendingJamos = [];     // Active Jamo buffer when typing syllable-by-syllable
     let gameOver = false;
-    let keyStatusMap = {};     // Track Virtual Key Colors
+    const keyStatuses = {}; // Stores color status for virtual keyboard
 
-    // Decompose Target Word into [ { cho, jung, jong }, ... ]
-    const targetDecomposed = [];
-    for (let i = 0; i < TARGET_WORD.length; i++) {
-      targetDecomposed.push(decomposeChar(TARGET_WORD[i]));
+    // Helper: Check if character is a complete Hangul syllable (가-힣)
+    function isCompleteSyllable(char) {
+      if (!char) return false;
+      const code = char.charCodeAt(0);
+      return code >= 0xAC00 && code <= 0xD7A3;
     }
 
-    // ==========================================
-    // 3. HANGUL DECOMPOSITION & AUTOMATON
-    // ==========================================
-
-    // Decompose Korean Syllable into { cho, jung, jong }
+    // Decompose single syllable into [cho, jung, jong]
     function decomposeChar(char) {
-      if (!char) return { cho: '', jung: '', jong: '' };
       const code = char.charCodeAt(0) - 0xAC00;
-      if (code < 0 || code > 11171) return { cho: char, jung: '', jong: '' };
-
-      const choIdx = Math.floor(code / 588);
-      const jungIdx = Math.floor((code % 588) / 28);
-      const jongIdx = code % 28;
-
-      return {
-        cho: CHO[choIdx] || '',
-        jung: JUNG[jungIdx] || '',
-        jong: JONG[jongIdx] || ''
-      };
+      if (code < 0 || code > 11171) return [char, '', ''];
+      
+      const cho = CHO[Math.floor(code / 588)];
+      const jung = JUNG[Math.floor((code % 588) / 28)];
+      const jong = JONG[code % 28];
+      
+      return [cho, jung, jong];
     }
 
-    // Hangul Automaton: Assemble Jamo buffer into Syllable Character (Supporting 종성/받침)
-    function composeJamos(jamos) {
-      if (!jamos || jamos.length === 0) return '';
+    // Live preview input in current active row
+    function updateCurrentRowPreview() {
+      if (gameOver || currentAttempt >= MAX_ATTEMPTS) return;
 
-      let cho = '', jung = '', jong = '';
+      const inputVal = document.getElementById('guess-input').value;
+      
+      for (let j = 0; j < 4; j++) {
+        const cell = document.getElementById(`cell-box-${currentAttempt}-${j}`);
+        const letterDiv = document.getElementById(`letter-${currentAttempt}-${j}`);
+        const char = inputVal[j] || "";
 
-      // 1. Initial Consonant (초성)
-      if (jamos.length >= 1 && CHO.includes(jamos[0])) {
-        cho = jamos[0];
-      } else if (jamos.length >= 1) {
-        return jamos[0];
-      }
+        if (letterDiv) {
+          letterDiv.innerText = char;
+        }
 
-      // 2. Medial Vowel (중성)
-      let idx = 1;
-      if (jamos.length >= 2) {
-        if (JUNG.includes(jamos[1])) {
-          jung = jamos[1];
-          idx = 2;
-          // Check for complex double vowel (e.g., ㅗ + ㅏ = ㅘ)
-          if (jamos.length >= 3 && JUNG.includes(jamos[2])) {
-            const doubleVowel = combineVowels(jamos[1], jamos[2]);
-            if (doubleVowel) {
-              jung = doubleVowel;
-              idx = 3;
-            }
-          }
+        if (cell) {
+          cell.classList.remove('border-syllable-complete');
+          cell.classList.add('border-zinc-800');
         }
       }
-
-      // 3. Final Consonant (종성/받침)
-      if (jamos.length > idx) {
-        const remaining = jamos.slice(idx);
-        if (remaining.length === 1 && JONG.includes(remaining[0])) {
-          jong = remaining[0];
-        } else if (remaining.length >= 2) {
-          const doubleJong = combineJongs(remaining[0], remaining[1]);
-          if (doubleJong) jong = doubleJong;
-          else if (JONG.includes(remaining[0])) jong = remaining[0];
-        }
-      }
-
-      // Compute Syllable Unicode Character
-      if (cho && jung) {
-        const cIdx = CHO.indexOf(cho);
-        const jIdx = JUNG.indexOf(jung);
-        const oIdx = JONG.indexOf(jong);
-        if (cIdx !== -1 && jIdx !== -1) {
-          const code = 0xAC00 + (cIdx * 588) + (jIdx * 28) + (oIdx !== -1 ? oIdx : 0);
-          return String.fromCharCode(code);
-        }
-      }
-
-      return cho || jamos.join('');
     }
 
-    function combineVowels(v1, v2) {
-      if (v1 === 'ㅗ' && v2 === 'ㅏ') return 'ㅘ';
-      if (v1 === 'ㅗ' && v2 === 'ㅐ') return 'ㅙ';
-      if (v1 === 'ㅗ' && v2 === 'ㅣ') return 'ㅚ';
-      if (v1 === 'ㅜ' && v2 === 'ㅓ') return 'ㅝ';
-      if (v1 === 'ㅜ' && v2 === 'ㅔ') return 'ㅞ';
-      if (v1 === 'ㅜ' && v2 === 'ㅣ') return 'ㅟ';
-      if (v1 === 'ㅡ' && v2 === 'ㅣ') return 'ㅢ';
-      return null;
-    }
-
-    function combineJongs(j1, j2) {
-      if (j1 === 'ㄱ' && j2 === 'ㄱ') return 'ㄲ';
-      if (j1 === 'ㄱ' && j2 === 'ㅅ') return 'ㄳ';
-      if (j1 === 'ㄴ' && j2 === 'ㅈ') return 'ㄵ';
-      if (j1 === 'ㄴ' && j2 === 'ㅎ') return 'ㄶ';
-      if (j1 === 'ㄹ' && j2 === 'ㄱ') return 'ㄺ';
-      if (j1 === 'ㄹ' && j2 === 'ㅁ') return 'ㄻ';
-      if (j1 === 'ㄹ' && j2 === 'ㅂ') return 'ㄼ';
-      if (j1 === 'ㄹ' && j2 === 'ㅅ') return 'ㄽ';
-      if (j1 === 'ㄹ' && j2 === 'ㅌ') return 'ㄾ';
-      if (j1 === 'ㄹ' && j2 === 'ㅍ') return 'ㄿ';
-      if (j1 === 'ㄹ' && j2 === 'ㅎ') return 'ㅀ';
-      if (j1 === 'ㅂ' && j2 === 'ㅅ') return 'ㅄ';
-      if (j1 === 'ㅅ' && j2 === 'ㅅ') return 'ㅆ';
-      return null;
-    }
+    // Build target Jamo set for global existence lookup
+    const targetJamoMatrix = TARGET_WORD.split('').map(decomposeChar);
+    const targetJamoSet = new Set();
+    targetJamoMatrix.forEach(jamoArray => {
+      jamoArray.forEach(jamo => {
+        if (jamo !== '') targetJamoSet.add(jamo);
+      });
+    });
 
     // ==========================================
-    // 4. UI INITIALIZATION
+    // 2. UI INITIALIZATION & KEYBOARD BUILD
     // ==========================================
-
+    
     function initBoard() {
       const board = document.getElementById('board');
       board.innerHTML = '';
 
-      for (let r = 0; r < MAX_ATTEMPTS; r++) {
-        const rowEl = document.createElement('div');
-        rowEl.id = `row-${r}`;
-        rowEl.className = `grid grid-cols-4 gap-2 w-full ${r === 0 ? 'opacity-100' : 'opacity-70'}`;
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        const row = document.createElement('div');
+        row.id = `row-${i}`;
+        row.className = `grid grid-cols-4 gap-2 w-full transition-opacity duration-300 ${i === 0 ? 'opacity-100' : 'opacity-35'}`;
+        
+        for (let j = 0; j < 4; j++) {
+          const cell = document.createElement('div');
+          cell.id = `cell-box-${i}-${j}`;
+          cell.className = "flex flex-col items-center justify-center p-2 bg-[#1a1a1b] border-2 border-zinc-800 rounded-xl h-20 sm:h-22 transition-all";
+          
+          // Main Syllable Letter
+          const letterDiv = document.createElement('div');
+          letterDiv.id = `letter-${i}-${j}`;
+          letterDiv.className = "text-xl sm:text-2xl font-black mb-1.5 h-7 flex items-center justify-center text-white";
+          letterDiv.innerText = "";
+          
+          // Jamo Status Badges (초/중/종)
+          const badgesDiv = document.createElement('div');
+          badgesDiv.className = "flex gap-1";
+          
+          ['cho', 'jung', 'jong'].forEach(pos => {
+            const badge = document.createElement('div');
+            badge.id = `badge-${i}-${j}-${pos}`;
+            badge.className = "w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-empty flex items-center justify-center text-[9px] sm:text-[10px] font-bold transition-all";
+            badge.innerText = "-";
+            badgesDiv.appendChild(badge);
+          });
 
-        for (let c = 0; c < WORD_LENGTH; c++) {
-          const tile = document.createElement('div');
-          tile.id = `tile-${r}-${c}`;
-          tile.className = `flip-tile h-20 bg-[#121213] border-2 border-[#3a3a3c] rounded-xl flex flex-col justify-between p-1.5 relative overflow-hidden`;
-
-          tile.innerHTML = `
-            <div class="syllable-char text-2xl font-black text-center text-white my-auto tracking-wider"></div>
-            <div class="jamo-container flex justify-center gap-1 w-full mt-auto">
-              <span class="jamo-pill cho-pill text-[10px] px-1 py-0.5 rounded bg-gray-800 text-gray-400 font-bold min-w-[14px] text-center">-</span>
-              <span class="jamo-pill jung-pill text-[10px] px-1 py-0.5 rounded bg-gray-800 text-gray-400 font-bold min-w-[14px] text-center">-</span>
-              <span class="jamo-pill jong-pill text-[10px] px-1 py-0.5 rounded bg-gray-800 text-gray-400 font-bold min-w-[14px] text-center">-</span>
-            </div>
-          `;
-          rowEl.appendChild(tile);
+          cell.appendChild(letterDiv);
+          cell.appendChild(badgesDiv);
+          row.appendChild(cell);
         }
-        board.appendChild(rowEl);
+        board.appendChild(row);
       }
-
-      initKeyboard();
     }
 
     function initKeyboard() {
-      const r1 = document.getElementById('key-row-1');
-      const r2 = document.getElementById('key-row-2');
-      const r3 = document.getElementById('key-row-3');
+      const row1Keys = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ'];
+      const row2Keys = ['ㅋ','ㅌ','ㅍ','ㅎ','ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
+      const row3Keys = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ'];
+      const row4Keys = ['ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ'];
 
-      r1.innerHTML = ''; r2.innerHTML = ''; r3.innerHTML = '';
-
-      KEYBOARD_LAYOUT.row1.forEach(k => r1.appendChild(createKeyBtn(k)));
-      KEYBOARD_LAYOUT.row2.forEach(k => r2.appendChild(createKeyBtn(k)));
-      KEYBOARD_LAYOUT.row3.forEach(k => r3.appendChild(createKeyBtn(k)));
+      renderKeyRow(document.getElementById('key-row-1'), row1Keys);
+      renderKeyRow(document.getElementById('key-row-2'), row2Keys);
+      renderKeyRow(document.getElementById('key-row-3'), row3Keys);
+      renderKeyRow(document.getElementById('key-row-4'), row4Keys);
     }
 
-    function createKeyBtn(key) {
-      const btn = document.createElement('button');
-      btn.id = `key-${key}`;
-      btn.className = `key-btn flex-1 h-11 bg-[#818384] hover:bg-gray-500 active:bg-gray-600 rounded-lg font-bold text-sm flex items-center justify-center transition-colors text-white shadow-sm`;
-      btn.innerText = key;
-      btn.onclick = () => handleVirtualKey(key);
-      return btn;
+    function renderKeyRow(container, keys) {
+      container.innerHTML = '';
+      keys.forEach(key => {
+        const btn = document.createElement('button');
+        btn.id = `vkey-${key}`;
+        btn.innerText = key;
+        btn.className = "key-btn flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-bold bg-zinc-800 text-zinc-200 rounded-md border border-zinc-700/60 hover:bg-zinc-700 active:bg-zinc-900";
+        btn.onclick = () => handleVirtualKeyInput(key);
+        container.appendChild(btn);
+      });
     }
 
-    // ==========================================
-    // 5. INPUT HANDLING
-    // ==========================================
+    function updateKeyboardStatus(jamo, statusClass) {
+      const keyBtn = document.getElementById(`vkey-${jamo}`);
+      if (!keyBtn) return;
 
-    // Direct Input Submission (batch 4-letter string like "예수사랑")
-    function submitDirectInput() {
+      // Priority: correct > present > absent
+      const current = keyStatuses[jamo];
+      if (current === 'bg-correct') return;
+      if (current === 'bg-present' && statusClass === 'bg-absent') return;
+
+      keyStatuses[jamo] = statusClass;
+      keyBtn.classList.remove('bg-zinc-800', 'bg-correct', 'bg-present', 'bg-absent');
+      keyBtn.classList.add(statusClass);
+    }
+
+    function handleVirtualKeyInput(jamo) {
       if (gameOver) return;
-      const inputEl = document.getElementById('direct-input');
-      const text = inputEl.value.trim();
-
-      if (text.length !== 4) {
-        showToast("정확히 4글자 한글 단어를 입력해주세요!");
-        return;
-      }
-
-      // Check for valid Hangul
-      for (let i = 0; i < 4; i++) {
-        const code = text.charCodeAt(i);
-        if (code < 0xAC00 || code > 0xD7A3) {
-          showToast("완전한 한글 글자(가-힣)만 입력 가능합니다!");
-          return;
-        }
-      }
-
-      currentSyllables = text.split('');
-      pendingJamos = [];
-      inputEl.value = '';
-      updateCurrentRowPreview();
-      submitAttempt();
-    }
-
-    // Virtual Keyboard Key Handler
-    function handleVirtualKey(key) {
-      if (gameOver) return;
-
-      if (key === 'ENTER') {
-        submitAttempt();
-        return;
-      }
-
-      if (key === 'BACKSPACE') {
-        if (pendingJamos.length > 0) {
-          pendingJamos.pop();
-        } else if (currentSyllables.length > 0) {
-          const popped = currentSyllables.pop();
-          const decomp = decomposeChar(popped);
-          pendingJamos = [];
-          if (decomp.cho) pendingJamos.push(decomp.cho);
-          if (decomp.jung) pendingJamos.push(decomp.jung);
-          if (decomp.jong) pendingJamos.push(decomp.jong);
-          pendingJamos.pop();
-        }
+      const inputEl = document.getElementById('guess-input');
+      if (inputEl.value.length < 4) {
+        // Append input character
+        inputEl.value += jamo;
         updateCurrentRowPreview();
-        return;
+        inputEl.focus();
       }
+    }
 
-      // Add Jamo
-      if (currentSyllables.length >= WORD_LENGTH && pendingJamos.length === 0) {
-        showToast("이미 4글자를 모두 입력하셨습니다.");
-        return;
-      }
-
-      pendingJamos.push(key);
-      
-      // Auto-advance syllable if current Jamo forms a new initial consonant after complete syllable
-      if (pendingJamos.length > 1 && CHO.includes(key) && isSyllableComplete(pendingJamos.slice(0, -1))) {
-        const prevJamos = pendingJamos.slice(0, -1);
-        currentSyllables.push(composeJamos(prevJamos));
-        pendingJamos = [key];
-      }
-
+    function deleteLastChar() {
+      const inputEl = document.getElementById('guess-input');
+      inputEl.value = inputEl.value.slice(0, -1);
       updateCurrentRowPreview();
-    }
-
-    function isSyllableComplete(jamos) {
-      if (jamos.length < 2) return false;
-      const comp = composeJamos(jamos);
-      const code = comp.charCodeAt(0);
-      return code >= 0xAC00 && code <= 0xD7A3;
-    }
-
-    function updateCurrentRowPreview() {
-      const displayList = [...currentSyllables];
-      if (pendingJamos.length > 0 && displayList.length < WORD_LENGTH) {
-        displayList.push(composeJamos(pendingJamos));
-      }
-
-      for (let c = 0; c < WORD_LENGTH; c++) {
-        const tile = document.getElementById(`tile-${currentAttempt}-${c}`);
-        const char = displayList[c] || '';
-        
-        const charEl = tile.querySelector('.syllable-char');
-        const choPill = tile.querySelector('.cho-pill');
-        const jungPill = tile.querySelector('.jung-pill');
-        const jongPill = tile.querySelector('.jong-pill');
-
-        charEl.innerText = char;
-
-        if (char) {
-          const decomp = decomposeChar(char);
-          choPill.innerText = decomp.cho || '-';
-          jungPill.innerText = decomp.jung || '-';
-          jongPill.innerText = decomp.jong || '-';
-          tile.classList.add('border-gray-500');
-        } else {
-          choPill.innerText = '-';
-          jungPill.innerText = '-';
-          jongPill.innerText = '-';
-          tile.classList.remove('border-gray-500');
-        }
-      }
-
-      // Update Top Status Display
-      const wordStr = displayList.join('');
-      document.getElementById('current-word-display').innerText = wordStr || '____';
+      inputEl.focus();
     }
 
     // ==========================================
-    // 6. PRECISE 2-PASS JAMO MATCHING LOGIC
+    // 3. GAME LOGIC & EVALUATION
     // ==========================================
 
-    function submitAttempt() {
-      if (pendingJamos.length > 0) {
-        const composed = composeJamos(pendingJamos);
-        if (composed && currentSyllables.length < WORD_LENGTH) {
-          currentSyllables.push(composed);
-          pendingJamos = [];
-        }
-      }
+    function submitGuess() {
+      if (gameOver) return;
 
-      if (currentSyllables.length < WORD_LENGTH) {
-        showToast("4글자를 모두 입력해주세요!");
+      const inputEl = document.getElementById('guess-input');
+      const guess = inputEl.value.trim();
+
+      if (guess.length !== 4) {
+        showToast("정확히 4글자를 입력해주세요.");
         return;
       }
 
-      const guessWord = currentSyllables.join('');
-      const guessDecomposed = currentSyllables.map(char => decomposeChar(char));
+      const guessJamoMatrix = guess.split('').map(decomposeChar);
+      
+      for (let i = 0; i < 4; i++) {
+        const letterDiv = document.getElementById(`letter-${currentAttempt}-${i}`);
+        const cell = document.getElementById(`cell-box-${currentAttempt}-${i}`);
+        
+        letterDiv.innerText = guess[i];
 
-      // Build Pool of Target Jamos for Yellow calculation
-      // Target: "생명나무" -> [ {cho:'ㅅ', jung:'ㅐ', jong:'ㅇ'}, ... ]
-      const targetPool = [];
-      targetDecomposed.forEach((d, slotIdx) => {
-        if (d.cho) targetPool.push({ jamo: d.cho, slot: slotIdx, type: 'cho', matched: false });
-        if (d.jung) targetPool.push({ jamo: d.jung, slot: slotIdx, type: 'jung', matched: false });
-        if (d.jong) targetPool.push({ jamo: d.jong, slot: slotIdx, type: 'jong', matched: false });
-      });
+        const gJamos = guessJamoMatrix[i];
+        const tJamos = targetJamoMatrix[i];
 
-      // Results matrix per slot
-      const evalResults = Array.from({ length: WORD_LENGTH }, () => ({
-        cho: 'absent',
-        jung: 'absent',
-        jong: 'absent'
-      }));
+        // Check if all Jamos for this exact syllable match the target syllable's Jamos
+        const isSyllableFullyMatched = (
+          gJamos[0] === tJamos[0] &&
+          gJamos[1] === tJamos[1] &&
+          gJamos[2] === tJamos[2]
+        );
 
-      // PASS 1: GREEN (Exact Match in Position & Type)
-      guessDecomposed.forEach((g, slot) => {
-        const t = targetDecomposed[slot];
-
-        if (g.cho && g.cho === t.cho) {
-          evalResults[slot].cho = 'correct';
-          const poolItem = targetPool.find(item => item.slot === slot && item.type === 'cho' && !item.matched);
-          if (poolItem) poolItem.matched = true;
+        // Highlight border only if the full syllable Jamos match completely
+        if (cell) {
+          if (isSyllableFullyMatched) {
+            cell.classList.add('border-syllable-complete');
+            cell.classList.remove('border-zinc-800');
+          } else {
+            cell.classList.remove('border-syllable-complete');
+            cell.classList.add('border-zinc-800');
+          }
         }
 
-        if (g.jung && g.jung === t.jung) {
-          evalResults[slot].jung = 'correct';
-          const poolItem = targetPool.find(item => item.slot === slot && item.type === 'jung' && !item.matched);
-          if (poolItem) poolItem.matched = true;
-        }
+        const positions = ['cho', 'jung', 'jong'];
 
-        if (g.jong && g.jong === t.jong) {
-          evalResults[slot].jong = 'correct';
-          const poolItem = targetPool.find(item => item.slot === slot && item.type === 'jong' && !item.matched);
-          if (poolItem) poolItem.matched = true;
-        }
-      });
+        positions.forEach((pos, idx) => {
+          const gVal = gJamos[idx];
+          const tVal = tJamos[idx];
+          const badge = document.getElementById(`badge-${currentAttempt}-${i}-${pos}`);
+          
+          if (!gVal) {
+            badge.innerText = "-";
+            badge.className = "w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-empty flex items-center justify-center text-[9px] sm:text-[10px] font-bold";
+          } else {
+            badge.innerText = gVal;
+            badge.classList.remove('bg-empty');
 
-      // PASS 2: YELLOW (Exists in Target BUT in different position/slot)
-      guessDecomposed.forEach((g, slot) => {
-        ['cho', 'jung', 'jong'].forEach(type => {
-          const val = g[type];
-          if (!val || evalResults[slot][type] === 'correct') return;
+            let statusClass = 'bg-absent';
+            if (gVal === tVal) {
+              statusClass = 'bg-correct'; // Exact slot match (Green)
+            } else if (targetJamoSet.has(gVal)) {
+              statusClass = 'bg-present'; // Global target word existence (Yellow)
+            }
 
-          const poolMatch = targetPool.find(item => item.jamo === val && !item.matched);
-          if (poolMatch) {
-            evalResults[slot][type] = 'present';
-            poolMatch.matched = true;
+            badge.classList.add(statusClass);
+            updateKeyboardStatus(gVal, statusClass);
           }
         });
-      });
-
-      // Render Results on UI Tiles
-      for (let c = 0; c < WORD_LENGTH; c++) {
-        const tile = document.getElementById(`tile-${currentAttempt}-${c}`);
-        const res = evalResults[c];
-
-        const choPill = tile.querySelector('.cho-pill');
-        const jungPill = tile.querySelector('.jung-pill');
-        const jongPill = tile.querySelector('.jong-pill');
-
-        setTimeout(() => {
-          tile.classList.add('flipped');
-
-          applyPillStatus(choPill, res.cho);
-          applyPillStatus(jungPill, res.jung);
-          applyPillStatus(jongPill, res.jong);
-
-          // Tile Frame Color
-          if (res.cho === 'correct' && res.jung === 'correct' && res.jong === 'correct') {
-            tile.className = tile.className.replace('bg-[#121213]', 'bg-emerald-950/70 border-emerald-500');
-          } else if (res.cho !== 'absent' || res.jung !== 'absent' || res.jong !== 'absent') {
-            tile.className = tile.className.replace('bg-[#121213]', 'bg-amber-950/50 border-amber-600');
-          } else {
-            tile.className = tile.className.replace('bg-[#121213]', 'bg-[#18181b] border-gray-700');
-          }
-
-          // Key status updates
-          updateKeyStatus(guessDecomposed[c].cho, res.cho);
-          updateKeyStatus(guessDecomposed[c].jung, res.jung);
-          updateKeyStatus(guessDecomposed[c].jong, res.jong);
-
-        }, c * 100);
       }
 
-      // Check Victory / Game Over
-      setTimeout(() => {
-        if (guessWord === TARGET_WORD) {
+      // Scroll board to current active row
+      const container = document.getElementById('board-container');
+      const currentRowEl = document.getElementById(`row-${currentAttempt}`);
+      currentRowEl.classList.remove('opacity-35');
+      currentRowEl.classList.add('opacity-100');
+      
+      if (currentAttempt < MAX_ATTEMPTS - 1) {
+        const nextRow = document.getElementById(`row-${currentAttempt + 1}`);
+        if (nextRow) {
+          nextRow.classList.remove('opacity-35');
+          nextRow.classList.add('opacity-80');
+        }
+        
+        const scrollTarget = currentRowEl.offsetTop - container.offsetTop;
+        container.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+      }
+
+      // Win / Loss Condition
+      if (guess === TARGET_WORD) {
+        gameOver = true;
+        setTimeout(() => showToast(`🎉 축하합니다! ${currentAttempt + 1}번 만에 정답을 맞혔습니다.`), 100);
+        inputEl.disabled = true;
+      } else {
+        currentAttempt++;
+        if (currentAttempt >= MAX_ATTEMPTS) {
           gameOver = true;
-          showResultModal(true);
-        } else {
-          currentAttempt++;
-          currentSyllables = [];
-          pendingJamos = [];
-          document.getElementById('attempts-left').innerText = MAX_ATTEMPTS - currentAttempt;
-
-          if (currentAttempt >= MAX_ATTEMPTS) {
-            gameOver = true;
-            showResultModal(false);
-          } else {
-            const boardScroll = document.getElementById('board-scroll');
-            const nextRow = document.getElementById(`row-${currentAttempt}`);
-            if (nextRow) {
-              nextRow.classList.remove('opacity-70');
-              nextRow.classList.add('opacity-100');
-              nextRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            updateCurrentRowPreview();
-          }
+          setTimeout(() => showToast(`게임 오버! 정답은 [${TARGET_WORD}] 였습니다.`), 100);
+          inputEl.disabled = true;
         }
-      }, WORD_LENGTH * 100 + 150);
-    }
-
-    function applyPillStatus(pillEl, status) {
-      if (!pillEl || pillEl.innerText === '-') return;
-      pillEl.classList.remove('bg-gray-800', 'text-gray-400');
-
-      if (status === 'correct') {
-        pillEl.classList.add('bg-emerald-600', 'text-white', 'font-bold');
-      } else if (status === 'present') {
-        pillEl.classList.add('bg-amber-600', 'text-white', 'font-bold');
-      } else {
-        pillEl.classList.add('bg-[#3a3a3c]', 'text-gray-400');
       }
-    }
 
-    function updateKeyStatus(jamo, status) {
-      if (!jamo) return;
-
-      const keys = [];
-      if (COMPLEX_JUNG[jamo]) keys.push(...COMPLEX_JUNG[jamo]);
-      else if (COMPLEX_JONG[jamo]) keys.push(...COMPLEX_JONG[jamo]);
-      else keys.push(jamo);
-
-      keys.forEach(key => {
-        const btn = document.getElementById(`key-${key}`);
-        if (!btn) return;
-
-        const currentStatus = keyStatusMap[key];
-        if (currentStatus === 'correct') return;
-        if (currentStatus === 'present' && status === 'absent') return;
-
-        keyStatusMap[key] = status;
-
-        btn.classList.remove('bg-[#818384]', 'bg-emerald-600', 'bg-amber-600', 'bg-[#3a3a3c]');
-        if (status === 'correct') {
-          btn.classList.add('bg-emerald-600', 'text-white');
-        } else if (status === 'present') {
-          btn.classList.add('bg-amber-600', 'text-white');
-        } else {
-          btn.classList.add('bg-[#3a3a3c]', 'text-gray-500');
-        }
-      });
-    }
-
-    // ==========================================
-    // 7. UTILS & MODALS
-    // ==========================================
-
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      toast.innerText = msg;
-      toast.classList.remove('opacity-0');
-      toast.classList.add('opacity-100');
+      // Reset input completely and blur momentarily to clear IME composition state
+      inputEl.value = "";
+      inputEl.blur();
       setTimeout(() => {
-        toast.classList.remove('opacity-100');
-        toast.classList.add('opacity-0');
-      }, 2000);
-    }
-
-    function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
-    }
-
-    function showResultModal(isWin) {
-      const modal = document.getElementById('result-modal');
-      const icon = document.getElementById('result-icon');
-      const title = document.getElementById('result-title');
-      const subtitle = document.getElementById('result-subtitle');
-      const statAttempts = document.getElementById('stat-attempts');
-      const statStatus = document.getElementById('stat-status');
-      const resultWord = document.getElementById('result-word');
-
-      resultWord.innerText = TARGET_WORD;
-
-      if (isWin) {
-        icon.innerText = '🎉';
-        title.innerText = '정답입니다!';
-        title.className = 'text-2xl font-bold mb-1 text-emerald-400';
-        subtitle.innerText = `축하합니다! ${currentAttempt + 1}번째 시도만에 맞히셨습니다.`;
-        statAttempts.innerText = `${currentAttempt + 1} / 20`;
-        statStatus.innerText = '성공';
-        statStatus.className = 'text-2xl font-bold text-emerald-400';
-      } else {
-        icon.innerText = '📢';
-        title.innerText = '아쉽습니다!';
-        title.className = 'text-2xl font-bold mb-1 text-rose-500';
-        subtitle.innerText = '20번의 기회를 모두 사용하셨습니다.';
-        statAttempts.innerText = '20 / 20';
-        statStatus.innerText = '실패';
-        statStatus.className = 'text-2xl font-bold text-rose-500';
-      }
-
-      modal.classList.remove('hidden');
+        if (!gameOver) {
+          inputEl.value = "";
+          updateCurrentRowPreview();
+          inputEl.focus();
+        }
+      }, 10);
     }
 
     function resetGame() {
       currentAttempt = 0;
-      currentSyllables = [];
-      pendingJamos = [];
       gameOver = false;
-      keyStatusMap = {};
-
-      document.getElementById('result-modal').classList.add('hidden');
-      document.getElementById('result-word').innerText = '????';
-      document.getElementById('attempts-left').innerText = MAX_ATTEMPTS;
-
+      Object.keys(keyStatuses).forEach(k => delete keyStatuses[k]);
+      
+      const inputEl = document.getElementById('guess-input');
+      inputEl.value = '';
+      inputEl.disabled = false;
+      
       initBoard();
-      updateCurrentRowPreview();
-      showToast("새 게임이 시작되었습니다!");
+      initKeyboard();
+      showToast("새 게임이 시작되었습니다.");
     }
 
-    // Physical Keyboard Listener
-    window.addEventListener('keydown', (e) => {
-      if (gameOver) return;
-      if (document.activeElement === document.getElementById('direct-input')) return;
+    // ==========================================
+    // 4. MODAL & TOAST HELPERS
+    // ==========================================
 
-      if (e.key === 'Enter') {
-        handleVirtualKey('ENTER');
-      } else if (e.key === 'Backspace') {
-        handleVirtualKey('BACKSPACE');
-      } else if (CHO.includes(e.key) || JUNG.includes(e.key)) {
-        handleVirtualKey(e.key);
-      }
+    function openModal() {
+      const modal = document.getElementById('rules-modal');
+      modal.classList.remove('pointer-events-none', 'opacity-0', 'hidden');
+      modal.classList.add('opacity-100', 'flex');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('rules-modal');
+      modal.classList.remove('opacity-100', 'flex');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+      
+      // Focus on input when modal is closed
+      setTimeout(() => {
+        const input = document.getElementById('guess-input');
+        if (input && !gameOver) {
+          input.focus();
+        }
+      }, 100);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0', '-translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-2');
+      }, 3000);
+    }
+
+    // Input Enter Key Event
+    document.getElementById('guess-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submitGuess();
     });
 
-    window.onload = () => {
+    // Window Load Initialization
+    window.onload = function() {
       initBoard();
-      updateCurrentRowPreview();
+      initKeyboard();
+      // Auto open modal on first load
+      openModal();
     };
   </script>
 </body>
