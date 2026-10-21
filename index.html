@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>4글자 한글 워들 - 한들</title>
+  <title>한들 & 성경 암호 해독 미션</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -13,22 +13,22 @@
     }
     
     /* Custom Scrollbar */
-    #board-container::-webkit-scrollbar {
+    ::-webkit-scrollbar {
       width: 6px;
     }
-    #board-container::-webkit-scrollbar-track {
+    ::-webkit-scrollbar-track {
       background: #18181c;
       border-radius: 4px;
     }
-    #board-container::-webkit-scrollbar-thumb {
+    ::-webkit-scrollbar-thumb {
       background: #3f3f46;
       border-radius: 4px;
     }
-    #board-container::-webkit-scrollbar-thumb:hover {
+    ::-webkit-scrollbar-thumb:hover {
       background: #52525b;
     }
 
-    /* Status Colors */
+    /* Status Colors for Wordle */
     .bg-correct { background-color: #538d4e !important; color: #ffffff !important; border-color: #538d4e !important; }
     .bg-present { background-color: #b59f3b !important; color: #ffffff !important; border-color: #b59f3b !important; }
     .bg-absent { background-color: #3a3a3c !important; color: #a1a1aa !important; border-color: #3a3a3c !important; }
@@ -36,7 +36,7 @@
 
     /* Complete Syllable Border Highlight */
     .border-syllable-complete {
-      border-color: #10b981 !important; /* Vivid Emerald Green for complete syllable */
+      border-color: #10b981 !important;
       box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
     }
 
@@ -48,109 +48,189 @@
     .key-btn:active {
       transform: scale(0.95);
     }
+
+    /* Tab active styles */
+    .tab-active {
+      background-color: #4f46e5 !important;
+      color: #ffffff !important;
+      border-color: #6366f1 !important;
+    }
   </style>
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-between p-3 sm:p-4 overflow-hidden select-none">
 
-  <!-- Header -->
-  <header class="w-full max-w-md flex items-center justify-between py-2 border-b border-zinc-800 mb-2">
-    <div class="flex items-center gap-2">
-      <h1 class="text-2xl font-black tracking-widest text-white">한들</h1>
-      <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">4글자 모드</span>
+  <!-- Header & Navigation -->
+  <header class="w-full max-w-md flex flex-col gap-2 border-b border-zinc-800 pb-2 mb-2 shrink-0">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-black tracking-widest text-white">성경 미션</h1>
+        <span id="current-mode-tag" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">챕터 1</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="header-help-btn" onclick="openModal()" class="flex items-center gap-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors">
+          <span>❓</span> 설명
+        </button>
+        <button onclick="resetCurrentChapter()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 p-1.5 rounded-lg border border-zinc-700 transition-colors" title="새 게임/초기화">
+          🔄
+        </button>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <button onclick="openModal()" class="flex items-center gap-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors">
-        <span>❓</span> 게임 방법
+
+    <!-- Chapter Navigation Tabs -->
+    <div class="grid grid-cols-2 gap-2 w-full pt-1">
+      <button id="tab-ch1" onclick="switchChapter(1)" class="tab-active py-2 px-3 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700 transition-all flex items-center justify-center gap-1.5">
+        <span>🧩</span> 1. 한들 (4글자 워들)
       </button>
-      <button onclick="resetGame()" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 p-1.5 rounded-lg border border-zinc-700 transition-colors" title="새 게임">
-        🔄
+      <button id="tab-ch2" onclick="switchChapter(2)" class="py-2 px-3 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700 transition-all flex items-center justify-center gap-1.5">
+        <span>📜</span> 2. 성경 암호 해독
       </button>
     </div>
   </header>
 
-  <!-- Input Section (POSITIONED ABOVE THE BOARD) -->
-  <div class="w-full max-w-md flex flex-col gap-2 mb-2 z-10">
-    <div class="flex gap-2">
-      <input type="text" id="guess-input" maxlength="4" placeholder="예) 예수사랑" 
-             oninput="updateCurrentRowPreview()"
-             class="flex-1 bg-[#1a1a1b] border-2 border-zinc-700 text-white font-bold px-3 py-2.5 rounded-xl text-center text-lg focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-zinc-600">
-      <button onclick="submitGuess()" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 font-bold px-5 py-2.5 rounded-xl text-white transition-colors flex items-center justify-center shadow-lg shadow-indigo-900/20">
-        입력
-      </button>
-      <button onclick="deleteLastChar()" class="bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-900 font-bold px-3 py-2.5 rounded-xl text-zinc-300 border border-zinc-700 transition-colors">
-        ⌫
-      </button>
+  <!-- ========================================== -->
+  <!-- CHAPTER 1: WORDLE GAME SECTION -->
+  <!-- ========================================== -->
+  <div id="chapter-1-view" class="w-full max-w-md flex-1 flex flex-col justify-between overflow-hidden">
+    <!-- Input Section -->
+    <div class="w-full flex flex-col gap-2 mb-2 z-10 shrink-0">
+      <div class="flex gap-2">
+        <input type="text" id="guess-input" maxlength="4" placeholder="예) 예수사랑" 
+               oninput="updateCurrentRowPreview()"
+               class="flex-1 bg-[#1a1a1b] border-2 border-zinc-700 text-white font-bold px-3 py-2.5 rounded-xl text-center text-lg focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-zinc-600">
+        <button onclick="submitGuess()" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 font-bold px-5 py-2.5 rounded-xl text-white transition-colors flex items-center justify-center shadow-lg shadow-indigo-900/20">
+          입력
+        </button>
+        <button onclick="deleteLastChar()" class="bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-900 font-bold px-3 py-2.5 rounded-xl text-zinc-300 border border-zinc-700 transition-colors">
+          ⌫
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Board Container -->
+    <main id="board-container" class="w-full flex-1 overflow-y-auto my-1 px-1 flex flex-col items-center relative">
+      <div id="board" class="flex flex-col gap-2.5 w-full py-1">
+        <!-- Rows generated dynamically -->
+      </div>
+    </main>
+
+    <!-- Virtual Keyboard Container -->
+    <div class="w-full mt-2 flex flex-col gap-1.5 pt-2 border-t border-zinc-800 shrink-0">
+      <div class="flex justify-center gap-1 w-full" id="key-row-1"></div>
+      <div class="flex justify-center gap-1 w-full" id="key-row-2"></div>
+      <div class="flex justify-center gap-1 w-full" id="key-row-3"></div>
+      <div class="flex justify-center gap-1 w-full" id="key-row-4"></div>
     </div>
   </div>
 
-  <!-- Game Board Container (Middle Scrollable, 20 Attempts Max) -->
-  <main id="board-container" class="w-full max-w-md flex-1 overflow-y-auto my-1 px-1 flex flex-col items-center relative">
-    <div id="board" class="flex flex-col gap-2.5 w-full py-1">
-      <!-- Rows generated dynamically -->
-    </div>
-  </main>
+  <!-- ========================================== -->
+  <!-- CHAPTER 2: BIBLE CIPHER DECRYPTION SECTION -->
+  <!-- ========================================== -->
+  <div id="chapter-2-view" class="w-full max-w-md flex-1 flex flex-col justify-between overflow-y-auto hidden">
+    <div class="flex flex-col gap-4 my-auto py-2">
+      
+      <!-- Timer Box -->
+      <div class="bg-zinc-900 border border-indigo-500/40 p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-lg shadow-indigo-950/20">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-zinc-400">
+          <span>⏱️</span> 힌트 생성까지 남은 시간
+        </div>
+        <div id="timer-display" class="text-3xl font-black font-mono tracking-widest text-indigo-400">
+          01:00
+        </div>
+      </div>
 
-  <!-- Virtual Keyboard Container (BOTTOM PINNED) -->
-  <div class="w-full max-w-md mt-2 flex flex-col gap-1.5 pt-2 border-t border-zinc-800">
-    <!-- Consonants Row 1 -->
-    <div class="flex justify-center gap-1 w-full" id="key-row-1">
-      <!-- ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ -->
+      <!-- Cipher Display Grid (Read-Only Cards) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        <!-- Slot 1 -->
+        <div class="bg-[#1a1a1b] border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1 shadow-md">
+          <span class="text-[10px] font-bold text-indigo-400">암호 1</span>
+          <div class="text-base font-extrabold font-mono text-amber-300 tracking-wide py-1">18-3-11-5</div>
+        </div>
+
+        <!-- Slot 2 -->
+        <div class="bg-[#1a1a1b] border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1 shadow-md">
+          <span class="text-[10px] font-bold text-indigo-400">암호 2</span>
+          <div class="text-base font-extrabold font-mono text-amber-300 tracking-wide py-1">60-1-7-18</div>
+        </div>
+
+        <!-- Slot 3 -->
+        <div class="bg-[#1a1a1b] border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1 shadow-md">
+          <span class="text-[10px] font-bold text-indigo-400">암호 3</span>
+          <div class="text-base font-extrabold font-mono text-amber-300 tracking-wide py-1">1-15-4-1</div>
+        </div>
+
+        <!-- Slot 4 -->
+        <div class="bg-[#1a1a1b] border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1 shadow-md">
+          <span class="text-[10px] font-bold text-indigo-400">암호 4</span>
+          <div class="text-base font-extrabold font-mono text-amber-300 tracking-wide py-1">40-7-18-7</div>
+        </div>
+
+        <!-- Slot 5 -->
+        <div class="bg-[#1a1a1b] border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1 shadow-md">
+          <span class="text-[10px] font-bold text-indigo-400">암호 5</span>
+          <div class="text-base font-extrabold font-mono text-amber-300 tracking-wide py-1">34-2-1-5</div>
+        </div>
+
+        <!-- Slot 6 -->
+      <div class="bg-[#1a1a1b] border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1 shadow-md">
+        <span class="text-[10px] font-bold text-indigo-400">암호 6</span>
+        <div class="text-base font-extrabold font-mono text-amber-300 tracking-wide py-1">52-1-7-15</div>
+      </div>
     </div>
-    <!-- Consonants Row 2 -->
-    <div class="flex justify-center gap-1 w-full" id="key-row-2">
-      <!-- ㅋ ㅌ ㅍ ㅎ ㄲ ㄸ ㅃ ㅆ ㅉ -->
-    </div>
-    <!-- Vowels Row 1 -->
-    <div class="flex justify-center gap-1 w-full" id="key-row-3">
-      <!-- ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ -->
-    </div>
-    <!-- Vowels Row 2 -->
-    <div class="flex justify-center gap-1 w-full" id="key-row-4">
-      <!-- ㅙ ㅚ ㅛ ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ -->
-    </div>
+
   </div>
+</div>
 
-  <!-- Onboarding / Rules Modal -->
-  <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200">
-    <div class="bg-[#18181c] border border-zinc-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left flex flex-col gap-4">
+<!-- Hint Popup Modal -->
+  <div id="hint-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200 opacity-0 pointer-events-none hidden">
+    <div class="bg-[#18181c] border border-indigo-600/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left flex flex-col gap-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-        <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+        <h2 class="text-xl font-extrabold text-amber-300 flex items-center gap-2">
+          <span>💡</span> 힌트가 해금되었습니다!
+        </h2>
+        <button onclick="closeHintModal()" class="text-zinc-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <div class="flex flex-col gap-3 text-sm text-zinc-300 leading-relaxed">
+        <p class="font-semibold text-zinc-100">숫자 암호를 해독할 수 있는 규칙 공식입니다:</p>
+        
+        <div class="bg-indigo-950/60 border border-indigo-700/60 p-4 rounded-xl flex flex-col gap-2 items-center text-center">
+          <span class="text-xs text-indigo-300 font-bold">암호 해석 공식</span>
+          <div class="text-xs sm:text-sm font-extrabold text-amber-300 font-mono tracking-tighter whitespace-nowrap overflow-x-auto w-full">
+            [성경책 순서 - 장 - 절 - 몇번째 글자]
+          </div>
+        </div>
+
+        <div class="bg-zinc-900/90 p-3 rounded-xl border border-zinc-800 text-xs text-zinc-300 space-y-1">
+          <p class="font-bold text-indigo-400 mb-1">💡 예시 설명:</p>
+          <p><strong class="text-amber-300">18-3-11-5</strong> 의 의미:</p>
+          <p class="text-zinc-400 pl-2">· 18 번째 성경책 (<strong class="text-zinc-200">욥기</strong>)</p>
+          <p class="text-zinc-400 pl-2">· 3 장 11 절</p>
+          <p class="text-zinc-400 pl-2">· 5 번째 글자</p>
+        </div>
+      </div>
+
+      <button onclick="closeHintModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors text-center shadow-lg shadow-indigo-900/30 mt-1">
+        암호 확인하러 가기
+      </button>
+    </div>
+  </div>
+
+  <!-- Shared Rules / Instructions Modal -->
+  <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200">
+    <div class="bg-[#18181c] border border-zinc-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <h2 id="modal-title" class="text-xl font-extrabold text-white flex items-center gap-2">
           <span>🧩</span> 한들 (4글자 워들)
         </h2>
         <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-lg font-bold">✕</button>
       </div>
 
-      <div class="flex flex-col gap-3 text-sm text-zinc-300 leading-relaxed">
-        <p class="font-semibold text-zinc-200">4글자 단어를 맞히는 한글 워들 게임입니다!</p>
-        
-        <ul class="space-y-2 list-disc list-inside text-zinc-300 text-xs sm:text-sm">
-          <li>정답은 <strong class="text-indigo-400">4글자 단어</strong>입니다.</li>
-          <li>총 <strong class="text-indigo-400">20번의 기회</strong>가 제공됩니다.</li>
-          <li>각 글자의 <strong class="text-zinc-100">초성, 중성, 종성(받침)</strong> 별로 판정됩니다.</li>
-        </ul>
-
-        <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 flex flex-col gap-2 mt-1">
-          <span class="text-xs font-bold text-zinc-400">색상 판정 안내:</span>
-          
-          <div class="flex items-center gap-2 text-xs">
-            <span class="w-5 h-5 rounded-full bg-[#538d4e] flex items-center justify-center font-bold text-white shrink-0">ㄱ</span>
-            <span><strong class="text-[#6bbf64]">초록색</strong>: 자모와 위치가 정확히 일치</span>
-          </div>
-          
-          <div class="flex items-center gap-2 text-xs">
-            <span class="w-5 h-5 rounded-full bg-[#b59f3b] flex items-center justify-center font-bold text-white shrink-0">ㅅ</span>
-            <span><strong class="text-[#d9c159]">노란색</strong>: 정답 단어 내에 존재함 (위치 다름)</span>
-          </div>
-
-          <div class="flex items-center gap-2 text-xs">
-            <span class="w-5 h-5 rounded-full bg-[#3a3a3c] flex items-center justify-center font-bold text-zinc-400 shrink-0">ㅇ</span>
-            <span><strong class="text-zinc-400">회색</strong>: 정답 단어에 포함되지 않음</span>
-          </div>
-        </div>
+      <div id="modal-body" class="flex flex-col gap-3 text-sm text-zinc-300 leading-relaxed">
+        <!-- Dynamic content injected depending on chapter -->
       </div>
 
       <button onclick="closeModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors text-center shadow-lg shadow-indigo-900/30 mt-1">
-        게임 시작하기
+        시작하기
       </button>
     </div>
   </div>
@@ -162,27 +242,207 @@
 
   <script>
     // ==========================================
-    // 1. GAME DATA & CONSTANTS
+    // 1. GAME DATA & GLOBALS
     // ==========================================
+    let activeChapter = 1;
+
+    // Chapter 1 Data
     const TARGET_WORD = "생명나무";
     const MAX_ATTEMPTS = 20;
     
     const CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
     const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ'];
-    const JONG = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const JONG = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
     let currentAttempt = 0;
     let gameOver = false;
-    const keyStatuses = {}; // Stores color status for virtual keyboard
+    const keyStatuses = {};
 
-    // Helper: Check if character is a complete Hangul syllable (가-힣)
-    function isCompleteSyllable(char) {
-      if (!char) return false;
-      const code = char.charCodeAt(0);
-      return code >= 0xAC00 && code <= 0xD7A3;
+    // Chapter 2 Data (Timer & Hint State)
+    let cipherTimer = null;
+    let cipherTimeLeft = 60; // 1 minute countdown
+    let timerStarted = false;
+    let hintUnlocked = false;
+
+    // ==========================================
+    // 2. CHAPTER SWITCHING & TIMER CONTROLS
+    // ==========================================
+    function switchChapter(ch) {
+      activeChapter = ch;
+      const ch1View = document.getElementById('chapter-1-view');
+      const ch2View = document.getElementById('chapter-2-view');
+      const tab1 = document.getElementById('tab-ch1');
+      const tab2 = document.getElementById('tab-ch2');
+      const tag = document.getElementById('current-mode-tag');
+      const helpBtn = document.getElementById('header-help-btn');
+
+      if (ch === 1) {
+        ch1View.classList.remove('hidden');
+        ch2View.classList.add('hidden');
+        tab1.classList.add('tab-active');
+        tab2.classList.remove('tab-active');
+        tag.innerText = "챕터 1";
+        
+        // Show explanation button for Chapter 1
+        helpBtn.classList.remove('hidden');
+        helpBtn.innerHTML = `<span>❓</span> 설명`;
+      } else {
+        ch1View.classList.add('hidden');
+        ch2View.classList.remove('hidden');
+        tab2.classList.add('tab-active');
+        tab1.classList.remove('tab-active');
+        tag.innerText = "챕터 2";
+
+        // Update header button according to hint unlock status
+        if (!hintUnlocked) {
+          helpBtn.classList.add('hidden');
+        } else {
+          helpBtn.classList.remove('hidden');
+          helpBtn.innerHTML = `<span>💡</span> 힌트 보기`;
+        }
+
+        // Start timer when entering Chapter 2 for the first time
+        if (!timerStarted) {
+          startCipherTimer();
+        }
+      }
     }
 
-    // Decompose single syllable into [cho, jung, jong]
+    function startCipherTimer() {
+      timerStarted = true;
+      cipherTimeLeft = 60;
+      updateTimerDisplay();
+
+      if (cipherTimer) clearInterval(cipherTimer);
+
+      cipherTimer = setInterval(() => {
+        cipherTimeLeft--;
+        updateTimerDisplay();
+
+        if (cipherTimeLeft <= 0) {
+          clearInterval(cipherTimer);
+          cipherTimer = null;
+          onTimerExpired();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const display = document.getElementById('timer-display');
+      if (!display) return;
+      const mins = Math.floor(cipherTimeLeft / 60).toString().padStart(2, '0');
+      const secs = (cipherTimeLeft % 60).toString().padStart(2, '0');
+      display.innerText = `${mins}:${secs}`;
+    }
+
+    function onTimerExpired() {
+      hintUnlocked = true;
+      const helpBtn = document.getElementById('header-help-btn');
+      
+      if (activeChapter === 2) {
+        helpBtn.classList.remove('hidden');
+        helpBtn.innerHTML = `<span>💡</span> 힌트 보기`;
+      }
+
+      openHintModal();
+    }
+
+    function openHintModal() {
+      const modal = document.getElementById('hint-modal');
+      modal.classList.remove('pointer-events-none', 'opacity-0', 'hidden');
+      modal.classList.add('opacity-100', 'flex');
+    }
+
+    function closeHintModal() {
+      const modal = document.getElementById('hint-modal');
+      modal.classList.remove('opacity-100', 'flex');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+    }
+
+    function openModal() {
+      if (activeChapter === 2 && hintUnlocked) {
+        openHintModal();
+        return;
+      }
+
+      const modal = document.getElementById('rules-modal');
+      const title = document.getElementById('modal-title');
+      const body = document.getElementById('modal-body');
+
+      title.innerHTML = `<span>🧩</span> 한들 (4글자 워들)`;
+      body.innerHTML = `
+        <p class="font-semibold text-zinc-200">4글자 단어를 맞히는 한글 워들 게임입니다!</p>
+        <ul class="space-y-2 list-disc list-inside text-zinc-300 text-xs sm:text-sm">
+          <li>정답은 <strong class="text-indigo-400">4글자 단어</strong>입니다.</li>
+          <li>총 <strong class="text-indigo-400">20번의 기회</strong>가 제공됩니다.</li>
+          <li>각 글자의 <strong class="text-zinc-100">초성, 중성, 종성(받침)</strong> 별로 판정됩니다.</li>
+        </ul>
+        <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 flex flex-col gap-2 mt-1">
+          <span class="text-xs font-bold text-zinc-400">색상 판정 안내:</span>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-5 h-5 rounded-full bg-[#538d4e] flex items-center justify-center font-bold text-white shrink-0">ㄱ</span>
+            <span><strong class="text-[#6bbf64]">초록색</strong>: 자모와 위치가 정확히 일치</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-5 h-5 rounded-full bg-[#b59f3b] flex items-center justify-center font-bold text-white shrink-0">ㅅ</span>
+            <span><strong class="text-[#d9c159]">노란색</strong>: 정답 단어 내에 존재함 (위치 다름)</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="w-5 h-5 rounded-full bg-[#3a3a3c] flex items-center justify-center font-bold text-zinc-400 shrink-0">ㅇ</span>
+            <span><strong class="text-zinc-400">회색</strong>: 정답 단어에 포함되지 않음</span>
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove('pointer-events-none', 'opacity-0', 'hidden');
+      modal.classList.add('opacity-100', 'flex');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('rules-modal');
+      modal.classList.remove('opacity-100', 'flex');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+      
+      setTimeout(() => {
+        if (activeChapter === 1) {
+          const input = document.getElementById('guess-input');
+          if (input && !gameOver) input.focus();
+        }
+      }, 100);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0', '-translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-2');
+      }, 3000);
+    }
+
+    function resetCurrentChapter() {
+      if (activeChapter === 1) {
+        resetGame();
+      } else {
+        if (cipherTimer) clearInterval(cipherTimer);
+        timerStarted = false;
+        hintUnlocked = false;
+        cipherTimeLeft = 60;
+        
+        const helpBtn = document.getElementById('header-help-btn');
+        helpBtn.classList.add('hidden');
+        
+        startCipherTimer();
+        showToast("암호 타이머가 초기화되었습니다.");
+      }
+    }
+
+    // ==========================================
+    // 3. CHAPTER 1 (WORDLE LOGIC)
+    // ==========================================
     function decomposeChar(char) {
       const code = char.charCodeAt(0) - 0xAC00;
       if (code < 0 || code > 11171) return [char, '', ''];
@@ -194,7 +454,6 @@
       return [cho, jung, jong];
     }
 
-    // Live preview input in current active row
     function updateCurrentRowPreview() {
       if (gameOver || currentAttempt >= MAX_ATTEMPTS) return;
 
@@ -205,10 +464,7 @@
         const letterDiv = document.getElementById(`letter-${currentAttempt}-${j}`);
         const char = inputVal[j] || "";
 
-        if (letterDiv) {
-          letterDiv.innerText = char;
-        }
-
+        if (letterDiv) letterDiv.innerText = char;
         if (cell) {
           cell.classList.remove('border-syllable-complete');
           cell.classList.add('border-zinc-800');
@@ -216,7 +472,6 @@
       }
     }
 
-    // Build target Jamo set for global existence lookup
     const targetJamoMatrix = TARGET_WORD.split('').map(decomposeChar);
     const targetJamoSet = new Set();
     targetJamoMatrix.forEach(jamoArray => {
@@ -225,10 +480,6 @@
       });
     });
 
-    // ==========================================
-    // 2. UI INITIALIZATION & KEYBOARD BUILD
-    // ==========================================
-    
     function initBoard() {
       const board = document.getElementById('board');
       board.innerHTML = '';
@@ -243,13 +494,11 @@
           cell.id = `cell-box-${i}-${j}`;
           cell.className = "flex flex-col items-center justify-center p-2 bg-[#1a1a1b] border-2 border-zinc-800 rounded-xl h-20 sm:h-22 transition-all";
           
-          // Main Syllable Letter
           const letterDiv = document.createElement('div');
           letterDiv.id = `letter-${i}-${j}`;
           letterDiv.className = "text-xl sm:text-2xl font-black mb-1.5 h-7 flex items-center justify-center text-white";
           letterDiv.innerText = "";
           
-          // Jamo Status Badges (초/중/종)
           const badgesDiv = document.createElement('div');
           badgesDiv.className = "flex gap-1";
           
@@ -282,6 +531,7 @@
     }
 
     function renderKeyRow(container, keys) {
+      if (!container) return;
       container.innerHTML = '';
       keys.forEach(key => {
         const btn = document.createElement('button');
@@ -297,7 +547,6 @@
       const keyBtn = document.getElementById(`vkey-${jamo}`);
       if (!keyBtn) return;
 
-      // Priority: correct > present > absent
       const current = keyStatuses[jamo];
       if (current === 'bg-correct') return;
       if (current === 'bg-present' && statusClass === 'bg-absent') return;
@@ -311,7 +560,6 @@
       if (gameOver) return;
       const inputEl = document.getElementById('guess-input');
       if (inputEl.value.length < 4) {
-        // Append input character
         inputEl.value += jamo;
         updateCurrentRowPreview();
         inputEl.focus();
@@ -324,10 +572,6 @@
       updateCurrentRowPreview();
       inputEl.focus();
     }
-
-    // ==========================================
-    // 3. GAME LOGIC & EVALUATION
-    // ==========================================
 
     function submitGuess() {
       if (gameOver) return;
@@ -351,14 +595,12 @@
         const gJamos = guessJamoMatrix[i];
         const tJamos = targetJamoMatrix[i];
 
-        // Check if all Jamos for this exact syllable match the target syllable's Jamos
         const isSyllableFullyMatched = (
           gJamos[0] === tJamos[0] &&
           gJamos[1] === tJamos[1] &&
           gJamos[2] === tJamos[2]
         );
 
-        // Highlight border only if the full syllable Jamos match completely
         if (cell) {
           if (isSyllableFullyMatched) {
             cell.classList.add('border-syllable-complete');
@@ -369,9 +611,7 @@
           }
         }
 
-        const positions = ['cho', 'jung', 'jong'];
-
-        positions.forEach((pos, idx) => {
+        ['cho', 'jung', 'jong'].forEach((pos, idx) => {
           const gVal = gJamos[idx];
           const tVal = tJamos[idx];
           const badge = document.getElementById(`badge-${currentAttempt}-${i}-${pos}`);
@@ -385,9 +625,9 @@
 
             let statusClass = 'bg-absent';
             if (gVal === tVal) {
-              statusClass = 'bg-correct'; // Exact slot match (Green)
+              statusClass = 'bg-correct';
             } else if (targetJamoSet.has(gVal)) {
-              statusClass = 'bg-present'; // Global target word existence (Yellow)
+              statusClass = 'bg-present';
             }
 
             badge.classList.add(statusClass);
@@ -396,7 +636,6 @@
         });
       }
 
-      // Scroll board to current active row
       const container = document.getElementById('board-container');
       const currentRowEl = document.getElementById(`row-${currentAttempt}`);
       currentRowEl.classList.remove('opacity-35');
@@ -413,7 +652,6 @@
         container.scrollTo({ top: scrollTarget, behavior: 'smooth' });
       }
 
-      // Win / Loss Condition
       if (guess === TARGET_WORD) {
         gameOver = true;
         setTimeout(() => showToast(`🎉 축하합니다! ${currentAttempt + 1}번 만에 정답을 맞혔습니다.`), 100);
@@ -427,7 +665,6 @@
         }
       }
 
-      // Reset input completely and blur momentarily to clear IME composition state
       inputEl.value = "";
       inputEl.blur();
       setTimeout(() => {
@@ -454,42 +691,9 @@
     }
 
     // ==========================================
-    // 4. MODAL & TOAST HELPERS
+    // 4. CHAPTER 2 (BIBLE CIPHER LOGIC)
     // ==========================================
-
-    function openModal() {
-      const modal = document.getElementById('rules-modal');
-      modal.classList.remove('pointer-events-none', 'opacity-0', 'hidden');
-      modal.classList.add('opacity-100', 'flex');
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('rules-modal');
-      modal.classList.remove('opacity-100', 'flex');
-      modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
-      
-      // Focus on input when modal is closed
-      setTimeout(() => {
-        const input = document.getElementById('guess-input');
-        if (input && !gameOver) {
-          input.focus();
-        }
-      }, 100);
-    }
-
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      toast.innerText = msg;
-      toast.classList.remove('opacity-0', '-translate-y-2');
-      toast.classList.add('opacity-100', 'translate-y-0');
-      
-      setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', '-translate-y-2');
-      }, 3000);
-    }
-
-    // Input Enter Key Event
+    // Event listener for Enter Key
     document.getElementById('guess-input').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') submitGuess();
     });
@@ -498,7 +702,6 @@
     window.onload = function() {
       initBoard();
       initKeyboard();
-      // Auto open modal on first load
       openModal();
     };
   </script>
