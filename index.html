@@ -67,6 +67,9 @@
         <span id="current-mode-tag" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">챕터 1</span>
       </div>
       <div class="flex items-center gap-2">
+        <button id="header-answer-btn" onclick="openAnswerModal()" class="hidden flex items-center gap-1 text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1.5 rounded-lg border border-emerald-700/60 transition-colors font-semibold" title="정답 확인하기">
+          🔑 정답 보기
+        </button>
         <button id="header-help-btn" onclick="openModal()" class="flex items-center gap-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors">
           <span>❓</span> 설명
         </button>
@@ -215,6 +218,29 @@
     </div>
   </div>
 
+  <!-- Answer Modal (Chapter 1) -->
+  <div id="answer-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200 opacity-0 pointer-events-none hidden">
+    <div class="bg-[#18181c] border border-emerald-600/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center flex flex-col gap-4">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <h2 class="text-xl font-extrabold text-emerald-400 flex items-center gap-2">
+          <span>🔑</span> 챕터 1 정답 확인
+        </h2>
+        <button onclick="closeAnswerModal()" class="text-zinc-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <div class="flex flex-col items-center gap-3 py-2">
+        <span class="text-xs text-zinc-400 font-semibold">이번 라운드의 정답 단어는 다음과 같습니다:</span>
+        <div class="text-3xl font-black text-amber-300 bg-zinc-900 border border-amber-500/30 px-6 py-3 rounded-xl tracking-widest shadow-inner">
+          생명나무
+        </div>
+      </div>
+
+      <button onclick="closeAnswerModal()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-colors text-center shadow-lg shadow-emerald-900/30 mt-1">
+        닫기
+      </button>
+    </div>
+  </div>
+
   <!-- Shared Rules / Instructions Modal -->
   <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200">
     <div class="bg-[#18181c] border border-zinc-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
@@ -275,6 +301,7 @@
       const tab2 = document.getElementById('tab-ch2');
       const tag = document.getElementById('current-mode-tag');
       const helpBtn = document.getElementById('header-help-btn');
+      const answerBtn = document.getElementById('header-answer-btn');
 
       if (ch === 1) {
         ch1View.classList.remove('hidden');
@@ -283,7 +310,12 @@
         tab2.classList.remove('tab-active');
         tag.innerText = "챕터 1";
         
-        // Show explanation button for Chapter 1
+        // Only show answer button if game is over (won or all 20 attempts used)
+        if (gameOver) {
+          answerBtn.classList.remove('hidden');
+        } else {
+          answerBtn.classList.add('hidden');
+        }
         helpBtn.classList.remove('hidden');
         helpBtn.innerHTML = `<span>❓</span> 설명`;
       } else {
@@ -292,6 +324,9 @@
         tab2.classList.add('tab-active');
         tab1.classList.remove('tab-active');
         tag.innerText = "챕터 2";
+
+        // Hide Chapter 1 answer button in Chapter 2
+        answerBtn.classList.add('hidden');
 
         // Update header button according to hint unlock status
         if (!hintUnlocked) {
@@ -306,6 +341,18 @@
           startCipherTimer();
         }
       }
+    }
+
+    function openAnswerModal() {
+      const modal = document.getElementById('answer-modal');
+      modal.classList.remove('pointer-events-none', 'opacity-0', 'hidden');
+      modal.classList.add('opacity-100', 'flex');
+    }
+
+    function closeAnswerModal() {
+      const modal = document.getElementById('answer-modal');
+      modal.classList.remove('opacity-100', 'flex');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
     }
 
     function startCipherTimer() {
@@ -654,12 +701,14 @@
 
       if (guess === TARGET_WORD) {
         gameOver = true;
+        document.getElementById('header-answer-btn').classList.remove('hidden');
         setTimeout(() => showToast(`🎉 축하합니다! ${currentAttempt + 1}번 만에 정답을 맞혔습니다.`), 100);
         inputEl.disabled = true;
       } else {
         currentAttempt++;
         if (currentAttempt >= MAX_ATTEMPTS) {
           gameOver = true;
+          document.getElementById('header-answer-btn').classList.remove('hidden');
           setTimeout(() => showToast(`게임 오버! 정답은 [${TARGET_WORD}] 였습니다.`), 100);
           inputEl.disabled = true;
         }
@@ -681,6 +730,9 @@
       gameOver = false;
       Object.keys(keyStatuses).forEach(k => delete keyStatuses[k]);
       
+      const answerBtn = document.getElementById('header-answer-btn');
+      if (answerBtn) answerBtn.classList.add('hidden');
+
       const inputEl = document.getElementById('guess-input');
       inputEl.value = '';
       inputEl.disabled = false;
