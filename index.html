@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>한들 & 성경 암호 해독 미션</title>
+  <title>누스-지성의 방</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -64,7 +64,7 @@
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <h1 class="text-2xl font-black tracking-widest text-white">누스-지성의 방</h1>
-        <span id="current-mode-tag" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">챕터 1</span>
+        <span id="current-mode-tag" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">네모 구역</span>
       </div>
       <div class="flex items-center gap-2">
         <button id="header-answer-btn" onclick="openAnswerModal()" class="hidden flex items-center gap-1 text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 px-2.5 py-1.5 rounded-lg border border-emerald-700/60 transition-colors font-semibold" title="정답 확인하기">
@@ -223,7 +223,7 @@
     <div class="bg-[#18181c] border border-emerald-600/60 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center flex flex-col gap-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-xl font-extrabold text-emerald-400 flex items-center gap-2">
-          <span>🔑</span> 챕터 1 정답 확인
+          <span>🔑</span> 네모 구역 정답 확인
         </h2>
         <button onclick="closeAnswerModal()" class="text-zinc-400 hover:text-white text-lg font-bold">✕</button>
       </div>
@@ -241,12 +241,81 @@
     </div>
   </div>
 
+  <!-- Intro Prologue Modal (Medieval Church Concept) -->
+  <div id="intro-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="bg-gradient-to-b from-[#1e1b18] to-[#121110] border-2 border-amber-600/70 rounded-2xl max-w-sm w-full p-6 shadow-[0_0_30px_rgba(217,119,6,0.25)] text-center flex flex-col gap-4 max-h-[92vh] overflow-y-auto relative">
+      
+      <!-- Header Badge -->
+      <div class="flex flex-col items-center gap-1 border-b border-amber-900/60 pb-3">
+        <span class="text-xs font-bold tracking-widest text-amber-500 uppercase">✦ 누스-지성의 방 ✦</span>
+        <h2 class="text-xl font-black text-amber-200 tracking-wide">성스러운 모험의 시작</h2>
+      </div>
+
+      <!-- Narrative Text -->
+      <div class="bg-black/40 border border-amber-900/40 rounded-xl p-4 text-xs sm:text-sm text-amber-100/90 leading-relaxed text-left space-y-2 shadow-inner">
+        <p class="font-serif italic text-amber-300/90 text-center text-sm font-semibold mb-2">
+          "어서오시오, 모험가들이여."
+        </p>
+        <p>
+          여기는 <strong class="text-amber-400 font-bold">누스-지성의 방</strong>이라고 하오. 그대들은 이곳에서 두 구역의 퀴즈를 풀고 그 답을 조합해야 스탬프를 받고 여기를 나갈 수 있다오.
+        </p>
+        <p>
+          <strong class="text-emerald-400">네모 구역</strong>과 <strong class="text-indigo-400">세모 구역</strong>의 각 답을 각각의 부장님들께 제시하고 각 구역의 숫자를 조합해서 최종 NPC를 찾아 오길 바라오.
+        </p>
+        <p class="pt-1 text-amber-400/90 font-medium text-center">
+          부디 그대들에게<br>전능하신 주님의 축복이 함께 하시길... ✝️
+        </p>
+      </div>
+
+      <!-- Holy Bible SVG Art -->
+      <div class="flex justify-center my-1">
+        <div class="relative group">
+          <div class="relative bg-[#28221d] border-2 border-amber-600/60 p-3 rounded-full flex items-center justify-center shadow-lg">
+            <svg class="w-20 h-20 text-amber-200" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Holy Rays behind Bible -->
+              <path d="M50 15V5M25 22L17 15M75 22L83 15M15 42H5M85 42H95" stroke="#fef08a" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+
+              <!-- Open Holy Bible Base & Pages -->
+              <path d="M18 76C28 72 45 72 50 77C55 72 72 72 82 76V45C72 41 55 41 50 46C45 41 28 41 18 45V76Z" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+              <path d="M50 46V77" stroke="#b45309" stroke-width="2"/>
+              <path d="M18 78C28 74 45 74 50 79C55 74 72 74 82 78V76C72 72 55 72 50 77C45 72 28 72 18 76V78Z" fill="#d97706"/>
+
+              <!-- Book Cover Base -->
+              <path d="M15 80C27 75 46 76 50 81C54 76 73 75 85 80V47C73 42 54 43 50 48C46 43 27 42 15 47V80Z" fill="#4a2810" stroke="#78350f" stroke-width="2" opacity="0.4"/>
+
+              <!-- Text Lines Simulation -->
+              <line x1="25" y1="52" x2="43" y2="50" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+              <line x1="25" y1="58" x2="43" y2="56" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+              <line x1="25" y1="64" x2="41" y2="62" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+
+              <line x1="57" y1="50" x2="75" y2="52" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+              <line x1="57" y1="56" x2="75" y2="58" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+              <line x1="57" y1="62" x2="75" y2="64" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+
+              <!-- Bookmark Ribbon -->
+              <path d="M50 46V68L54 64L58 68V48" fill="#dc2626"/>
+
+              <!-- Cross Accent on Page -->
+              <path d="M34 32V20M29 24H39" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Button -->
+      <button onclick="closeIntroModal()" class="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-500 text-stone-950 font-black py-3.5 rounded-xl transition-all shadow-lg shadow-amber-950/50 hover:shadow-amber-600/30 text-base tracking-wide flex items-center justify-center gap-2 border border-amber-300/40 active:scale-98">
+        <span>⚔️</span> 게임 속으로 <span>→</span>
+      </button>
+
+    </div>
+  </div>
+
   <!-- Shared Rules / Instructions Modal -->
-  <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200">
+  <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200 opacity-0 pointer-events-none hidden">
     <div class="bg-[#18181c] border border-zinc-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-left flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 id="modal-title" class="text-xl font-extrabold text-white flex items-center gap-2">
-          <span>🧩</span> 한들 (4글자 워들)
+          <span>🧩</span> 네모 구역
         </h2>
         <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-lg font-bold">✕</button>
       </div>
@@ -335,9 +404,8 @@
         ch2View.classList.add('hidden');
         tab1.classList.add('tab-active');
         tab2.classList.remove('tab-active');
-        tag.innerText = "챕터 1";
+        tag.innerText = "네모 구역";
         
-        // Only show answer button if game is over (won or all 20 attempts used)
         if (gameOver) {
           answerBtn.classList.remove('hidden');
         } else {
@@ -350,12 +418,10 @@
         ch2View.classList.remove('hidden');
         tab2.classList.add('tab-active');
         tab1.classList.remove('tab-active');
-        tag.innerText = "챕터 2";
+        tag.innerText = "세모 구역";
 
-        // Hide Chapter 1 answer button in Chapter 2
         answerBtn.classList.add('hidden');
 
-        // Update header button according to hint unlock status
         if (!hintUnlocked) {
           helpBtn.classList.add('hidden');
         } else {
@@ -363,7 +429,6 @@
           helpBtn.innerHTML = `<span>💡</span> 힌트 보기`;
         }
 
-        // Start timer when entering Chapter 2 for the first time
         if (!timerStarted) {
           startCipherTimer();
         }
@@ -433,6 +498,17 @@
       modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
     }
 
+    function closeIntroModal() {
+      const introModal = document.getElementById('intro-modal');
+      if (introModal) {
+        introModal.style.display = 'none';
+        introModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+        introModal.classList.remove('flex', 'opacity-100');
+      }
+      
+      openModal();
+    }
+
     function openModal() {
       if (activeChapter === 2 && hintUnlocked) {
         openHintModal();
@@ -443,7 +519,7 @@
       const title = document.getElementById('modal-title');
       const body = document.getElementById('modal-body');
 
-      title.innerHTML = `<span>🧩</span> 한들 (4글자 워들)`;
+      title.innerHTML = `<span>🧩</span> 네모 구역`;
       body.innerHTML = `
         <p class="font-semibold text-zinc-200">4글자 단어를 맞히는 한글 워들 게임입니다!</p>
         <ul class="space-y-2 list-disc list-inside text-zinc-300 text-xs sm:text-sm">
@@ -475,12 +551,14 @@
         </p>
       `;
 
+      modal.style.display = 'flex';
       modal.classList.remove('pointer-events-none', 'opacity-0', 'hidden');
-      modal.classList.add('opacity-100', 'flex');
+      modal.classList.add('opacity-100');
     }
 
     function closeModal() {
       const modal = document.getElementById('rules-modal');
+      modal.style.display = 'none';
       modal.classList.remove('opacity-100', 'flex');
       modal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
       
@@ -777,18 +855,31 @@
     }
 
     // ==========================================
-    // 4. CHAPTER 2 (BIBLE CIPHER LOGIC)
+    // 4. INITIALIZATION & EVENT LISTENERS
     // ==========================================
-    // Event listener for Enter Key
     document.getElementById('guess-input').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') submitGuess();
     });
 
-    // Window Load Initialization
     window.onload = function() {
       initBoard();
       initKeyboard();
-      openModal();
+      
+      // Ensure Rules modal is hidden initially
+      const rulesModal = document.getElementById('rules-modal');
+      if (rulesModal) {
+        rulesModal.style.display = 'none';
+        rulesModal.classList.add('opacity-0', 'pointer-events-none', 'hidden');
+        rulesModal.classList.remove('opacity-100', 'flex');
+      }
+
+      // Display main prologue modal first
+      const introModal = document.getElementById('intro-modal');
+      if (introModal) {
+        introModal.style.display = 'flex';
+        introModal.classList.remove('pointer-events-none', 'hidden');
+        introModal.classList.add('opacity-100', 'flex');
+      }
     };
   </script>
 </body>
